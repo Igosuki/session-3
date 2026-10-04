@@ -27,25 +27,14 @@ import { QuickMenuToggle, SystemIndicator }
 import { Extension as BaseExtension }
     from 'resource:///org/gnome/shell/extensions/extension.js';
 
-import { opt } from './lib/config.js';
+import { opt, bind_settings, unbind_settings } from './lib/config.js';
 import { setLogger, debug, _ } from './lib/log.js';
-import { Desktop } from './lib/desktop.js';
-import { Session } from './lib/session.js';
-
-/* ToDo:
-    self_managed: LibreOffice (sometimes?)
-    Save settings in the session.ini file so that they can be modified there
-    Offer auto-save on window create/move/resize/close and auto-restore on GNOME startup
-
-    journalctl -f GNOME_SHELL_EXTENSION_UUID=session@research-lab.ca -q --output=json --all | jq --unbuffered -r '"\(.["__REALTIME_TIMESTAMP"] | tonumber / 1000000 | todateiso8601 | sub("Z$"; "")): \(.MESSAGE)"' | tee journalctl
-
-    Impress opening dialog blocks all other LibreOffice launches! (sometimes?)
-        Nautilus dialog does not block other launches.
-*/
+import { save_session, restore_session, shutdown } from './lib/actions.js';
+import { Auto } from './lib/auto.js';
 
 const SessionToggle = GObject.registerClass(
 class SessionToggle extends QuickMenuToggle {
-    _init() {
+    _init(extension) {
         super._init({
             title: _('Session'),
             icon_name: 'view-paged-rtl-symbolic',
@@ -58,8 +47,7 @@ class SessionToggle extends QuickMenuToggle {
         item.connect('activate', () => {
             try {
                 debug(2, `Saving session.`);
-                let session = new Desktop();
-                session.save();
+                save_session();
             } catch(error) {
                 debug(0, error);
             }
@@ -71,11 +59,7 @@ class SessionToggle extends QuickMenuToggle {
             item.connect('activate', () => {
                 try {
                     debug(2, `Restoring session (${level}).`);
-                    let session = new Session();
-                    session.match_by_id();
-                    if (level>0) session.match_by_properties();
-                    if (level>1) session.restore_missing();
-                    if (level<2) session.restore_properties();
+                    restore_session(level);
                 } catch(error) {
                     debug(0, error);
                 }
@@ -83,16 +67,21 @@ class SessionToggle extends QuickMenuToggle {
             this.menu.addMenuItem(item);
         }
 
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        item = new PopupMenu.PopupMenuItem(_('Preferences'));
+        item.connect('activate', () => extension.openPreferences());
+        this.menu.addMenuItem(item);
+
         this.connect('clicked', () => this.menu.open());
     }
 });
 
 const Indicator = GObject.registerClass(
 class Indicator extends SystemIndicator {
-    _init() {
+    _init(extension) {
         super._init();
 
-        this._toggle = new SessionToggle();
+        this._toggle = new SessionToggle(extension);
         this.quickSettingsItems.push(this._toggle);
     }
 
@@ -105,18 +94,28 @@ class Indicator extends SystemIndicator {
 // Add a System Menu "Indicator" entry containing a "SessionToggle" menu button:
 export default class Extension extends BaseExtension {
     enable() {
+        this._settings = this.getSettings();
+        bind_settings(this._settings);
         setLogger({
             level: () => opt.debug,
             notify: Main.notify,
             gettext: this.gettext.bind(this),
         });
 
-        this._indicator = new Indicator();
+        this._auto = new Auto(this._settings);
+        this._auto.start();
+
+        this._indicator = new Indicator(this);
         Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator);
     }
 
     disable() {
         this._indicator.destroy();
         this._indicator = null;
+        this._auto.stop();
+        this._auto = null;
+        shutdown();
+        unbind_settings();
+        this._settings = null;
     }
 }

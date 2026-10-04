@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="session-3@igosuki.github.io">
+  <schema id="org.gnome.shell.extensions.session-3" path="/org/gnome/shell/extensions/session-3/">
+    <key name="session-file" type="s">
+      <default>''</default>
+      <summary>Session file</summary>
+      <description>Path of the saved session. Empty uses ~/.config/session-3/session.json.</description>
+    </key>
+    <key name="debug-level" type="i">
+      <range min="0" max="4"/>
+      <default>3</default>
+      <summary>Log verbosity</summary>
+      <description>0 errors, 1 warnings, 2 info, 3 detail, 4 debug.</description>
+    </key>
+    <key name="self-managed" type="as">
+      <default>['firefox', 'google-chrome', 'chromium', 'TradingView', 'dev.zed.Zed', 'jetbrains-webstorm', 'install4j-jclient-LoginFrame', 'code', 'Slack', 'discord', 'obsidian']</default>
+      <summary>Self-managed applications</summary>
+      <description>Applications that restore their own windows; they are launched at most once.</description>
+    </key>
+    <key name="settle-seconds" type="i">
+      <range min="0" max="600"/>
+      <default>20</default>
+      <summary>Settle time</summary>
+      <description>Seconds after a restore during which automatic saving stays paused if the session cannot report completion.</description>
+    </key>
+    <key name="auto-save" type="b">
+      <default>true</default>
+      <summary>Save automatically</summary>
+    </key>
+    <key name="auto-save-minutes" type="i">
+      <range min="1" max="120"/>
+      <default>5</default>
+      <summary>Auto-save interval in minutes</summary>
+    </key>
+    <key name="auto-restore" type="b">
+      <default>true</default>
+      <summary>Restore at login</summary>
+    </key>
+    <key name="auto-restore-delay-seconds" type="i">
+      <range min="0" max="120"/>
+      <default>5</default>
+      <summary>Delay before restoring at login</summary>
+    </key>
+    <key name="auto-restore-level" type="s">
+      <choices>
+        <choice value="existing"/>
+        <choice value="matching"/>
+        <choice value="missing"/>
+      </choices>
+      <default>'missing'</default>
+      <summary>Login restore level</summary>
+      <description>existing moves windows already open, matching also matches by properties, missing also launches absent applications.</description>
+    </key>
+  </schema>
+</schemalist>
