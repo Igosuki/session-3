@@ -1,12 +1,12 @@
 {
-  "name": "GNOME Session Save and Restore",
-  "description": "Save and restore your GNOME Shell desktop active running application windows and their positions across multiple workspaces",
-  "uuid": "session@research-lab.ca",
+  "name": "Session Restore (Electron-aware)",
+  "description": "Save and restore running application windows, their positions and workspaces across multiple monitors, with support for Electron and other self-restoring applications",
+  "uuid": "session-3@igosuki.github.io",
   "shell-version": [
-    "45",
-    "46",
-    "47",
-    "48",
-    "49"
-  ]
+    "49",
+    "50"
+  ],
+  "settings-schema": "org.gnome.shell.extensions.session-3",
+  "url": "https://github.com/Igosuki/session-3",
+  "version-name": "3.0"
 }
