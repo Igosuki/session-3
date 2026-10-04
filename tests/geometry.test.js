@@ -1,6 +1,6 @@
 import System from 'system';
 
-import { to_relative, to_absolute, clamp_to_area, rect_string, rects_equal, monitor_containing }
+import { to_relative, to_absolute, clamp_to_area, rect_string, rects_equal, monitor_containing, window_mode_plan }
     from '../lib/geometry.js';
 
 let failures = 0;
@@ -71,6 +71,25 @@ test('monitor_containing: picks by center, falls back to nearest', () => {
     assert_equal(monitor_containing({ x: -500, y: 0, width: 200, height: 200 }, [right, left]), 1);
     assert_equal(monitor_containing({ x: 100, y: 0, width: 200, height: 200 }, [right, left]), 0);
     assert_equal(monitor_containing({ x: -5000, y: 0, width: 100, height: 100 }, [right, left]), 1);
+});
+
+const mode = (h, v, fs) => ({ 'maximized-horizontal': h, 'maximized-vertical': v, fullscreen: fs });
+
+test('window_mode_plan: unlocked windows never cycle', () => {
+    let plan = window_mode_plan(mode(true, true, false), mode(false, false, false), true);
+    assert_equal([plan.locked, plan.cycle, plan.state_differs], [false, false, true]);
+});
+
+test('window_mode_plan: locked window cycles on state or monitor change only', () => {
+    assert_equal(window_mode_plan(mode(true, true, false), mode(true, true, false), false).cycle, false);
+    assert_equal(window_mode_plan(mode(true, true, false), mode(true, true, false), true).cycle, true);
+    assert_equal(window_mode_plan(mode(false, false, false), mode(true, false, false), false).cycle, true);
+    assert_equal(window_mode_plan(mode(false, false, true), mode(false, false, true), false).cycle, false);
+});
+
+test('window_mode_plan: exposes wanted and current flags', () => {
+    let plan = window_mode_plan(mode(true, false, true), mode(false, true, false), false);
+    assert_equal([plan.want, plan.have], [{ h: true, v: false, fs: true }, { h: false, v: true, fs: false }]);
 });
 
 if (failures) {
