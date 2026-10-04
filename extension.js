@@ -94,28 +94,37 @@ class Indicator extends SystemIndicator {
 // Add a System Menu "Indicator" entry containing a "SessionToggle" menu button:
 export default class Extension extends BaseExtension {
     enable() {
-        this._settings = this.getSettings();
-        bind_settings(this._settings);
-        setLogger({
-            level: () => opt.debug,
-            notify: Main.notify,
-            gettext: this.gettext.bind(this),
-        });
+        try {
+            this._settings = this.getSettings();
+            bind_settings(this._settings);
+            setLogger({
+                level: () => opt.debug,
+                notify: Main.notify,
+                gettext: this.gettext.bind(this),
+            });
 
-        this._auto = new Auto(this._settings);
-        this._auto.start();
+            this._auto = new Auto(this._settings);
+            this._auto.start();
 
-        this._indicator = new Indicator(this);
-        Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator);
+            this._indicator = new Indicator(this);
+            Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator);
+        } catch (error) {
+            this._teardown();
+            throw error;
+        }
     }
 
     disable() {
-        this._indicator.destroy();
+        this._teardown();
+    }
+
+    _teardown() {
+        this._indicator?.destroy();
         this._indicator = null;
-        this._auto.stop();
+        this._auto?.stop();
         this._auto = null;
         shutdown();
-        unbind_settings();
+        if (this._settings) unbind_settings();
         this._settings = null;
     }
 }
